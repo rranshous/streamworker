@@ -8,6 +8,7 @@ module StreamWorker
     state = Hash.new
     EventStore::Util.poll(@eventstore, @stream).each do |event|
       next if @event_type && event[:type] != @event_type
+      @current_event = event
       @handler.call state, event, redis_client
     end
   end
@@ -36,6 +37,13 @@ module StreamWorker
   def redis_connection
     # will use REDIS_URL as connection string
     @redis_connection ||= Redis.new
+  end
+  def log msg
+    print "#{@handler_name}|" if @handler_name
+    print "#{@stream}:" if @stream && !@handler_name
+    print ":#{@event_type}" if @event_type && !@handler_name
+    print "[#{@event[:id]}]" if @event
+    puts " #{msg}"
   end
 end
 include StreamWorker
