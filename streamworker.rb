@@ -52,7 +52,7 @@ class State
 end
 
 at_exit do
-  if $!.nil?
+  if $!.nil? && @handler
     run!
   end
 end
