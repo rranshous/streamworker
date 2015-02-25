@@ -42,7 +42,7 @@ module StreamWorker
     print "#{@handler_name}|" if @handler_name
     print "#{@stream}:" if @stream && !@handler_name
     print ":#{@event_type}" if @event_type && !@handler_name
-    print "[#{@event[:id]}]" if @event
+    print "[#{@current_event[:id]}]" if @current_event
     puts " #{msg}"
   end
 end
