@@ -8,6 +8,7 @@ module StreamWorker
       next if @event_type && event[:type] != @event_type
       @current_event = event
       @handler.call state, event, redis_client
+      STDOUT.flush
     end
   end
   def handle stream, &blk
