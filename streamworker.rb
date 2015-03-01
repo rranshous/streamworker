@@ -23,8 +23,19 @@ module StreamWorker
   end
   def eventstore
     return @eventstore if @eventstore
-    default_url = 'http://0.0.0.0:2113'
-    @eventstore ||= EventStore::Client.new ENV['EVENTSTORE_URL'] || default_url
+    @eventstore ||= EventStore::Client.new eventstore_conn_string
+  end
+  def eventstore_conn_string
+    # most strait forward way to set
+    url = ENV['EVENTSTORE_URL']
+    # check for docker link vars
+    if ENV['EVENTSTORE_PORT']
+      host_port = ENV['EVENTSTORE_PORT'].split('//').last
+      url = "http://#{host_port}"
+    end
+    # fall back to local
+    url ||= 'http://0.0.0.0:2113'
+    url
   end
   def name handler_name
     @handler_name = handler_name
