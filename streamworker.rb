@@ -3,6 +3,7 @@ require 'redis-namespace'
 
 module StreamWorker
   def run!
+    puts "Running #{@handler_name || @stream}"
     state = Hash.new
     EventStore::Util.poll(eventstore, @stream).each do |event|
       next if @event_type && event[:type] != @event_type
