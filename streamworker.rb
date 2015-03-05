@@ -1,3 +1,4 @@
+require_relative 'worker'
 require 'eventstore'
 require 'redis-namespace'
 
@@ -5,23 +6,16 @@ module StreamWorker
   def run!
     puts "Running #{@handler_name || @stream}"
     STDOUT.flush
-    state = Hash.new
-    EventStore::Util.poll(eventstore, @stream).each do |event|
-      next if @event_type && event[:type] != @event_type
-      @current_event = event
-      @handler.call state, event, redis_client
-      STDOUT.flush
-    end
+    @worker.run! eventstore, namespaced_redis(@handler_name)
   end
   def handle stream, &blk
     if stream.is_a?(Hash)
-      @stream = stream.keys.first
-      @event_type = stream.values.first
+      stream, event_type = stream.first
     else
-      @stream = stream
-      @event_type = nil
+      stream = stream
+      event_type = nil
     end
-    @handler = blk
+    @worker = StreamWorker::Worker.new @handler_name, stream, event_type, blk
   end
   def eventstore
     return @eventstore if @eventstore
@@ -56,11 +50,7 @@ module StreamWorker
     @redis_connection ||= Redis.new
   end
   def log msg
-    print "#{@handler_name}|" if @handler_name
-    print "#{@stream}:" if @stream && !@handler_name
-    print ":#{@event_type}" if @event_type && !@handler_name
-    print "[#{@current_event[:id]}]" if @current_event
-    puts " #{msg}"
+    @worker.log msg
   end
 end
 include StreamWorker
